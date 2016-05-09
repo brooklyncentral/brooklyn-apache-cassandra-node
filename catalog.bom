@@ -22,10 +22,12 @@ brooklyn.catalog:
   name: Apache Cassandra Node
   description: Cassandra is a highly scalable, eventually consistent, distributed, structured key-value store which provides a ColumnFamily-based data model richer than typical key/value systems
   itemType: template
+  iconUrl: https://upload.wikimedia.org/wikipedia/commons/5/5e/Cassandra_logo.svg
   license: Apache-2.0
   publish:
     license_code: Apache-2.0
     reference: reference.json
+    qa: catalog.tests.bom
   item:
     services:
     - type: org.apache.brooklyn.entity.nosql.cassandra.CassandraNode

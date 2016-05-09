@@ -1,0 +1,127 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+brooklyn.catalog:
+  id: brooklyn-apache-cassandra-node-tests
+  version: 0.1
+  itemType: template
+  iconUrl: https://upload.wikimedia.org/wikipedia/commons/5/5e/Cassandra_logo.svg
+  name: Cassandra Node tests
+  description: Test that Cassandra Node is running correctly
+  license_code: Apache-2.0
+  license_url: http://www.apache.org/licenses/LICENSE-2.0.txt
+  item:
+    services:
+    - type: brooklyn-apache-cassandra-node
+      id: cassandranode
+      name: Cassandra Node
+      brooklyn.config:
+        datastore.creation.script.contents: CREATE KEYSPACE temporary;
+    - type: org.apache.brooklyn.test.framework.TestCase
+      name: Cassandra Node tests
+      targetId: cassandranode
+      brooklyn.config:
+        timeout: 15m
+      brooklyn.children:
+
+      # Base tests
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: Base Tests
+        brooklyn.children:
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Cassandra node is up
+          sensor: service.isUp
+          assert:
+          - equals: true
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Cassandra creating script has been executed
+          runDir: $brooklyn:entity("cassandranode").attributeWhenReady("run.dir")
+          command: echo "show keyspaces;" | bin/cassandra-cli | grep temporary
+          assertStatus:
+            equals: 0
+
+      # Effector: executeScript Tests
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: "Effector: executeScript Tests"
+        brooklyn.children:
+        - type: org.apache.brooklyn.test.framework.TestEffector
+          name: Invoke executeScript Effector
+          effector: executeScript
+          params:
+            commands: CREATE KEYSPACE aKeySpaceWithVeryLongName;
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Cassandra script script has been executed
+          runDir: $brooklyn:entity("cassandranode").attributeWhenReady("run.dir")
+          command: echo "show keyspaces;" | bin/cassandra-cli | grep aKeySpaceWithVeryLongName
+          assertStatus:
+            equals: 0
+
+      # Effector: restart Tests
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: "Effector: restart Tests"
+        brooklyn.children:
+        - type: org.apache.brooklyn.test.framework.TestEffector
+          name: Invoke restart Effector
+          effector: restart
+          params:
+            restartMachine: false
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Cassandra is up after restart
+          sensor: service.isUp
+          assert:
+          - equals: true
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Cassandra process has restarted
+          command: ps -ef | grep [c]assandra
+          assertStatus:
+            equals: 0
+
+      # Effector: stop + restart Tests
+      - type: org.apache.brooklyn.test.framework.TestCase
+        name: "Effector: stop + restart Tests"
+        brooklyn.children:
+        - type: org.apache.brooklyn.test.framework.TestEffector
+          name: Invoke stop Effector
+          effector: stop
+          params:
+            stopMachineMode: NEVER
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Cassandra is not up after stop
+          sensor: service.isUp
+          assert:
+          - equals: false
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Cassandra process has stopped
+          command: ps -ef | grep [c]assandra
+          assertStatus:
+            equals: 1
+        - type: org.apache.brooklyn.test.framework.TestEffector
+          name: Invoke restart Effector
+          effector: restart
+          params:
+            restartMachine: false
+        - type: org.apache.brooklyn.test.framework.TestSensor
+          name: Check Cassandra is up after restart
+          sensor: service.isUp
+          assert:
+          - equals: true
+        - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
+          name: Check Cassandra process has restarted
+          command: ps -ef | grep [c]assandra
+          assertStatus:
+            equals: 0
