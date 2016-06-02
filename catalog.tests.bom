@@ -36,7 +36,7 @@ brooklyn.catalog:
       name: Cassandra Node tests
       targetId: cassandranode
       brooklyn.config:
-        timeout: 15m
+        timeout: 1h
       brooklyn.children:
 
       # Base tests
