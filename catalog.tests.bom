@@ -87,7 +87,7 @@ brooklyn.catalog:
           - equals: true
         - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
           name: Check Cassandra process has restarted
-          command: ps -ef | grep [c]assandra
+          command: "ps -ef | grep [c]assandra | grep -v 'dhclient' | grep -v 'avahi'"
           assertStatus:
             equals: 0
 
@@ -107,7 +107,7 @@ brooklyn.catalog:
           - equals: false
         - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
           name: Check Cassandra process has stopped
-          command: ps -ef | grep [c]assandra
+          command: "ps -ef | grep [c]assandra | grep -v 'dhclient' | grep -v 'avahi'"
           assertStatus:
             equals: 1
         - type: org.apache.brooklyn.test.framework.TestEffector
@@ -122,6 +122,6 @@ brooklyn.catalog:
           - equals: true
         - type: org.apache.brooklyn.test.framework.SimpleShellCommandTest
           name: Check Cassandra process has restarted
-          command: ps -ef | grep [c]assandra
+          command: "ps -ef | grep [c]assandra | grep -v 'dhclient' | grep -v 'avahi'"
           assertStatus:
             equals: 0
